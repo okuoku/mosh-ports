@@ -6,41 +6,36 @@
 #
 
 PORTNAME=	mosh
-PORTVERSION=	0.0.7
-PORTREVISION=	1
+PORTVERSION=	0.2.7
 CATEGORIES=	lang
-MASTER_SITES=	${MASTER_SITE_GOOGLE_CODE}
+MASTER_SITES=	GOOGLE_CODE
 
 MAINTAINER=	katsuji.ishikawa@gmail.com
 COMMENT=	A Fast R6RS Scheme interpreter
 
-PROJECTHOST=	mosh-scheme
+LIB_DEPENDS=	gmp.10:${PORTSDIR}/math/gmp \
+		onig.2:${PORTSDIR}/devel/oniguruma5
 
-GNU_CONFIGURE=	yes
 USE_GCC=	4.2+
-ONLY_FOR_ARCHS=	i386
+USE_GMAKE=	yes
+GNU_CONFIGURE=	yes
+MAKE_JOBS_SAFE=	yes
+CFLAGS+=	-I${LOCALBASE}/include
+LDFLAGS+=	-L${LOCALBASE}/lib
 
-SCMS=		all-tests.scm repl.scm tools/psyntax-r6rs/rev10_to_10/psyntax.scm
-SS1=		lib/srfi/%3A8.ss lib/srfi/%3A98.ss
-SS2=		lib/mosh/test.ss
+PROJECTHOST=	mosh-scheme
+MAN1=	mosh.1 mosh_config.1
 
-do-install:
-	${MKDIR} ${DATADIR}/lib
-	${MKDIR} ${DATADIR}/lib/srfi
-	${MKDIR} ${DATADIR}/lib/mosh
+INSTALL_TARGET=	install-exec install-man
 
-.for F in ${SCMS}
-	${INSTALL_DATA} ${WRKSRC}/${F} ${DATADIR}/
-.endfor
+.if !defined(NOPORTDATA)
+PORTDATA=	*
+INSTALL_TARGET+=	install-dataDATA install-nobase_dataDATA
+.endif
 
-.for F in ${SS1}
-	${INSTALL_DATA} ${WRKSRC}/${F} ${DATADIR}/lib/srfi/
-.endfor
+PLIST_FILES=	bin/mosh bin/mosh_config bin/nmosh
 
-.for F in ${SS2}
-	${INSTALL_DATA} ${WRKSRC}/${F} ${DATADIR}/lib/mosh/
-.endfor
-
-	${INSTALL_PROGRAM} ${WRKSRC}/${PORTNAME} ${PREFIX}/bin/
+post-patch:
+	${REINPLACE_CMD} 's|mosh-$$PACKAGE_VERSION|mosh|' ${WRKSRC}/configure
 
 .include <bsd.port.mk>
