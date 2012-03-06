@@ -10,7 +10,7 @@ PORTVERSION=	0.2.7
 CATEGORIES=	lang
 MASTER_SITES=	GOOGLE_CODE
 
-MAINTAINER=	katsuji.ishikawa@gmail.com
+MAINTAINER=	mjt@cltn.org
 COMMENT=	A Fast R6RS Scheme interpreter
 
 LIB_DEPENDS=	gmp.10:${PORTSDIR}/math/gmp \
@@ -19,6 +19,7 @@ LIB_DEPENDS=	gmp.10:${PORTSDIR}/math/gmp \
 USE_GCC=	4.2+
 USE_GMAKE=	yes
 GNU_CONFIGURE=	yes
+CONFIGURE_ARGS=	--datadir=${PREFIX}/lib
 MAKE_JOBS_SAFE=	yes
 CFLAGS+=	-I${LOCALBASE}/include
 LDFLAGS+=	-L${LOCALBASE}/lib
@@ -26,16 +27,20 @@ LDFLAGS+=	-L${LOCALBASE}/lib
 PROJECTHOST=	mosh-scheme
 MAN1=	mosh.1 mosh_config.1
 
-INSTALL_TARGET=	install-exec install-man
+.include <bsd.port.pre.mk>
 
-.if !defined(NOPORTDATA)
-PORTDATA=	*
-INSTALL_TARGET+=	install-dataDATA install-nobase_dataDATA
+.if ${OSVERSION} < 800000
+BROKEN=	Does not build on FreeBSD 7.x
 .endif
-
-PLIST_FILES=	bin/mosh bin/mosh_config bin/nmosh
 
 post-patch:
 	${REINPLACE_CMD} 's|mosh-$$PACKAGE_VERSION|mosh|' ${WRKSRC}/configure
 
-.include <bsd.port.mk>
+x-generate-plist:
+	@${ECHO} bin/mosh > pkg-plist.new
+	@${ECHO} bin/mosh_config >> pkg-plist.new
+	@${ECHO} bin/nmosh >> pkg-plist.new
+	@${FIND} ${LOCALBASE}/lib/mosh -type f | ${SORT} | ${SED} 's|${LOCALBASE}/||' >> pkg-plist.new
+	@${FIND} ${LOCALBASE}/lib/mosh -type d | ${SORT} -r | ${SED} 's|${LOCALBASE}/|@dirrm |' >> pkg-plist.new
+
+.include <bsd.port.post.mk>
